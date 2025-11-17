@@ -1,0 +1,30 @@
+[
+  {
+    "gender": "male",
+    "age": "18-24",
+    "clicks": 120,
+    "spend": 300,
+    "revenue": 500,
+    "impressions": 1000,
+    "conversions": 50,
+    "ctr": 12,
+    "conversionRate": 41.7,
+    "week": 1,
+    "region": "City A",
+    "device": "Desktop"
+  },
+  {
+    "gender": "female",
+    "age": "25-34",
+    "clicks": 200,
+    "spend": 500,
+    "revenue": 800,
+    "impressions": 1500,
+    "conversions": 70,
+    "ctr": 13.3,
+    "conversionRate": 35,
+    "week": 1,
+    "region": "City B",
+    "device": "Mobile"
+  }
+]
