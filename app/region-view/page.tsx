@@ -3,22 +3,31 @@
 import { Navbar } from '../../src/components/ui/navbar';
 import { Footer } from '../../src/components/ui/footer';
 import { BubbleMap } from '../../src/components/ui/bubble-map';
-import marketingData from '../../src/data/marketing.json';
+import marketingDataRaw from '../../public/data/marketing.json';
+
+// Safely get the array from the JSON
+const marketingData = Array.isArray(marketingDataRaw) ? marketingDataRaw : marketingDataRaw.default;
+
+// Map your regions to coordinates
+const cityCoordinates: Record<string, [number, number]> = {
+  'City A': [-74.006, 40.7128],   // Example: New York
+  'City B': [-118.2437, 34.0522]  // Example: Los Angeles
+};
 
 export default function RegionView() {
-  // Map your regions to coordinates
-  const cityCoordinates: Record<string, [number, number]> = {
-    'City A': [-74.006, 40.7128], // New York
-    'City B': [-118.2437, 34.0522] // Los Angeles
-  };
-
-  // Transform marketing data for BubbleMap
-  const regionData = marketingData.map(item => ({
-    city: item.region,
-    coordinates: cityCoordinates[item.region],
-    revenue: item.revenue,
-    spend: item.spend
-  }));
+  // Transform marketing data for BubbleMap, only include valid coordinates
+  const regionData = marketingData
+    .map(item => {
+      const coords = cityCoordinates[item.region];
+      if (!coords) return null; // skip if no coordinates
+      return {
+        city: item.region,
+        coordinates: coords,
+        revenue: item.revenue,
+        spend: item.spend
+      };
+    })
+    .filter(Boolean) as { city: string; coordinates: [number, number]; revenue: number; spend: number }[];
 
   return (
     <div className="flex h-screen bg-gray-900">
@@ -29,9 +38,7 @@ export default function RegionView() {
         <section className="bg-gradient-to-r from-gray-800 to-gray-700 text-white py-12">
           <div className="px-6 lg:px-8">
             <div className="text-center">
-              <h1 className="text-3xl md:text-5xl font-bold">
-                Region View
-              </h1>
+              <h1 className="text-3xl md:text-5xl font-bold">Region View</h1>
             </div>
           </div>
         </section>

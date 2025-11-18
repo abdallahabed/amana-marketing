@@ -1,8 +1,9 @@
 'use client';
 
-import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps';
+import { ComposableMap, Geographies, Geography, Marker, GeographiesProps } from 'react-simple-maps';
 import { scaleSqrt } from 'd3-scale';
-import countries from '../../data/countries-110m.json';
+
+const geoUrl = '/data/countries-110m.json'; // JSON in public folder
 
 interface BubbleMapProps {
   data: { city: string; coordinates: [number, number]; revenue: number; spend: number }[];
@@ -17,8 +18,8 @@ export const BubbleMap = ({ data, title }: BubbleMapProps) => {
     <div className="bg-gray-700 p-4 rounded-lg mb-8 text-white">
       {title && <h3 className="text-white font-bold mb-2">{title}</h3>}
       <ComposableMap projection="geoMercator">
-        <Geographies geography={countries}>
-          {({ geographies }) =>
+        <Geographies geography={geoUrl}>
+          {({ geographies }: { geographies: any[] }) =>
             geographies.map(geo => (
               <Geography
                 key={geo.rsmKey}

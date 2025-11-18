@@ -4,7 +4,7 @@ import { Navbar } from '../../src/components/ui/navbar';
 import { CardMetric } from '../../src/components/ui/card-metric';
 import { Footer } from '../../src/components/ui/footer';
 import { Users, TrendingUp, Target } from 'lucide-react';
-import marketingData from '../../src/data/marketing.json';
+import rawMarketingData from '../../public/data/marketing.json';
 import {
   BarChart as ReBarChart,
   Bar,
@@ -19,6 +19,20 @@ import {
 // =======================================================
 // TYPES
 // =======================================================
+
+interface MarketingRow {
+  // put the fields you actually have in marketing.json here
+  // mark optional if some rows might not include them
+  gender?: 'male' | 'female' | string;
+  age?: string;
+  spend?: number;
+  revenue?: number;
+  impressions?: number;
+  clicks?: number;
+  conversions?: number;
+  // other optional fields (city, date, device...) can be added as needed
+  [key: string]: any;
+}
 
 interface BarChartRow {
   age: string;
@@ -44,23 +58,31 @@ interface TableProps {
 }
 
 // =======================================================
+// TYPE-CAST MARKETING DATA (resolve implicit any)
+// =======================================================
+
+const marketingDataTyped = (rawMarketingData as unknown) as MarketingRow[];
+
+// =======================================================
 // BAR CHART COMPONENT
 // =======================================================
 
 const BarChart = ({ data }: BarChartProps) => (
   <div className="bg-gray-700 p-4 text-white mb-8 rounded-lg">
     <h3 className="text-white font-bold mb-2">Spend & Revenue by Age Group</h3>
-    <ResponsiveContainer width="100%" height={300}>
-      <ReBarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#888" />
-        <XAxis dataKey="age" stroke="#fff" />
-        <YAxis stroke="#fff" />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="spend" fill="#8884d8" />
-        <Bar dataKey="revenue" fill="#82ca9d" />
-      </ReBarChart>
-    </ResponsiveContainer>
+    <div style={{ width: '100%', height: 300 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ReBarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#888" />
+          <XAxis dataKey="age" stroke="#fff" />
+          <YAxis stroke="#fff" />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="spend" name="Spend" fill="#8884d8" />
+          <Bar dataKey="revenue" name="Revenue" fill="#82ca9d" />
+        </ReBarChart>
+      </ResponsiveContainer>
+    </div>
   </div>
 );
 
@@ -68,72 +90,90 @@ const BarChart = ({ data }: BarChartProps) => (
 // TABLE COMPONENT
 // =======================================================
 
-const Table = ({ data }: TableProps) => (
-  <div className="overflow-x-auto mb-8">
-    <table className="min-w-full text-white border border-gray-500">
-      <thead>
-        <tr className="bg-gray-800">
-          {Object.keys(data[0] || {}).map((key) => (
-            <th key={key} className="px-4 py-2 border">{key}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((row, i) => (
-          <tr key={i} className="border-t border-gray-600">
-            {Object.values(row).map((val, j) => (
-              <td key={j} className="px-4 py-2 border">{val}</td>
+const Table = ({ data }: TableProps) => {
+  if (!data || data.length === 0) {
+    return <div className="text-white mb-8">No data available.</div>;
+  }
+
+  // ensure stable column order
+  const columns = ['age', 'impressions', 'clicks', 'conversions', 'ctr', 'conversionRate'];
+
+  return (
+    <div className="overflow-x-auto mb-8">
+      <table className="min-w-full text-white border border-gray-500">
+        <thead>
+          <tr className="bg-gray-800">
+            {columns.map((key) => (
+              <th key={key} className="px-4 py-2 border text-left">
+                {key}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
+        </thead>
+        <tbody>
+          {data.map((row, i) => (
+            <tr key={i} className="border-t border-gray-600">
+              {columns.map((col) => (
+                <td key={col} className="px-4 py-2 border">
+                  {/* show as-is; numbers will render correctly */}
+                  {/* @ts-ignore -- safe because columns are controlled */}
+                  {row[col as keyof TableRow] ?? '-'}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 // =======================================================
 // MAIN PAGE
 // =======================================================
 
 export default function DemographicView() {
-  const maleData = marketingData.filter((d: any) => d.gender === 'male');
-  const femaleData = marketingData.filter((d: any) => d.gender === 'female');
+  const marketingData = marketingDataTyped;
 
-  const totalMaleClicks = maleData.reduce((s: number, d: any) => s + d.clicks, 0);
-  const totalMaleSpend = maleData.reduce((s: number, d: any) => s + d.spend, 0);
-  const totalMaleRevenue = maleData.reduce((s: number, d: any) => s + d.revenue, 0);
+  const maleData: MarketingRow[] = marketingData.filter((d) => d.gender === 'male');
+  const femaleData: MarketingRow[] = marketingData.filter((d) => d.gender === 'female');
 
-  const totalFemaleClicks = femaleData.reduce((s: number, d: any) => s + d.clicks, 0);
-  const totalFemaleSpend = femaleData.reduce((s: number, d: any) => s + d.spend, 0);
-  const totalFemaleRevenue = femaleData.reduce((s: number, d: any) => s + d.revenue, 0);
+  const totalMaleClicks = maleData.reduce((s, d) => s + (d.clicks ?? 0), 0);
+  const totalMaleSpend = maleData.reduce((s, d) => s + (d.spend ?? 0), 0);
+  const totalMaleRevenue = maleData.reduce((s, d) => s + (d.revenue ?? 0), 0);
+
+  const totalFemaleClicks = femaleData.reduce((s, d) => s + (d.clicks ?? 0), 0);
+  const totalFemaleSpend = femaleData.reduce((s, d) => s + (d.spend ?? 0), 0);
+  const totalFemaleRevenue = femaleData.reduce((s, d) => s + (d.revenue ?? 0), 0);
 
   const spendByAge: Record<string, number> = {};
   const revenueByAge: Record<string, number> = {};
 
-  marketingData.forEach((d: any) => {
-    spendByAge[d.age] = (spendByAge[d.age] || 0) + d.spend;
-    revenueByAge[d.age] = (revenueByAge[d.age] || 0) + d.revenue;
+  marketingData.forEach((d) => {
+    const age = d.age ?? 'Unknown';
+    spendByAge[age] = (spendByAge[age] || 0) + (d.spend ?? 0);
+    revenueByAge[age] = (revenueByAge[age] || 0) + (d.revenue ?? 0);
   });
 
   const barData: BarChartRow[] = Object.keys(spendByAge).map((age) => ({
     age,
     spend: spendByAge[age],
-    revenue: revenueByAge[age],
+    revenue: revenueByAge[age] ?? 0,
   }));
 
   // TABLE DATA BUILDER
-  const prepareTableData = (genderData: any[]): TableRow[] => {
-    const ageGroups = [...new Set(genderData.map((d: any) => d.age))];
+  const prepareTableData = (genderData: MarketingRow[]): TableRow[] => {
+    const ageGroups = Array.from(new Set(genderData.map((d) => d.age ?? 'Unknown')));
 
     return ageGroups.map((age) => {
-      const groupData = genderData.filter((d: any) => d.age === age);
+      const groupData = genderData.filter((d) => (d.age ?? 'Unknown') === age);
 
-      const impressions = groupData.reduce((sum, d) => sum + d.impressions, 0);
-      const clicks = groupData.reduce((sum, d) => sum + d.clicks, 0);
-      const conversions = groupData.reduce((sum, d) => sum + d.conversions, 0);
+      const impressions = groupData.reduce((sum, d) => sum + (d.impressions ?? 0), 0);
+      const clicks = groupData.reduce((sum, d) => sum + (d.clicks ?? 0), 0);
+      const conversions = groupData.reduce((sum, d) => sum + (d.conversions ?? 0), 0);
 
-      const ctr = ((clicks / impressions) * 100 || 0).toFixed(2);
-      const conversionRate = ((conversions / clicks) * 100 || 0).toFixed(2);
+      const ctr = impressions ? ((clicks / impressions) * 100).toFixed(2) : '0.00';
+      const conversionRate = clicks ? ((conversions / clicks) * 100).toFixed(2) : '0.00';
 
       return { age, impressions, clicks, conversions, ctr, conversionRate };
     });

@@ -1,7 +1,7 @@
 'use client';
 import { Navbar } from '../../src/components/ui/navbar';
 import { Footer } from '../../src/components/ui/footer';
-import marketingData from '../../src/data/marketing.json';
+import marketingData from '../../public/data/marketing.json';
 import { LineChart } from '../../src/components/ui/line-chart';
 
 export default function WeeklyView() {
