@@ -3,10 +3,18 @@
 import { Navbar } from '../../src/components/ui/navbar';
 import { Footer } from '../../src/components/ui/footer';
 import { BubbleMap } from '../../src/components/ui/bubble-map';
-import marketingDataRaw from '../../public/data/marketing.json';
+import marketingDataRaw from '../../public/data/marketing.json' assert { type: 'json' };
 
-// Safely get the array from the JSON
-const marketingData = Array.isArray(marketingDataRaw) ? marketingDataRaw : marketingDataRaw.default;
+// Define TypeScript type for your data
+interface MarketingItem {
+  region: string;
+  revenue: number;
+  spend: number;
+  [key: string]: any; // allow extra fields if needed
+}
+
+// Cast the imported JSON to an array of MarketingItem
+const marketingData = marketingDataRaw as MarketingItem[];
 
 // Map your regions to coordinates
 const cityCoordinates: Record<string, [number, number]> = {
